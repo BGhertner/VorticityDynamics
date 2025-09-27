@@ -9,7 +9,8 @@ def poisson(omega, Lx, Ly, Nx, Ny, Uinf=0., Fourier=False):
     kk, ll = np.meshgrid(k, l)
 
     #reciprocal of total wave number squared
-    mu2_r = 1/(kk**2 + ll**2)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        mu2_r = 1/(kk**2 + ll**2)
     mu2_r[0,0] = 0.
 
     #Fourier coefficients for psi
