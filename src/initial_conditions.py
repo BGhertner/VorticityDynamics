@@ -1,23 +1,42 @@
-
+# Ben Ghertner 2025
+#
+# Routines to generate initial conditions.
 
 import numpy as np
 from scipy.special import jn_zeros, jv
 
+"""
+Generate the initial conditions for the Lamb dipole.
+This an ideal test case as the Lamb dipole is an
+exact solution on the infinite domain.
 
+inputs:
+    Lx      - (float) Horizontal length of the domain
+    Ly      - (float) Vertical length of the domain
+    Nx      - (int) Number of grid points in the horizontal direction
+    Ny      - (int) Number of grid points in the vertical direction
+    Uinf    - (float) Horizontal background wind speed
+    R       - (float) Radius of the dipole
+
+returns: 
+    omega   - (2D numpy array with dimensions Ny x Nx) Vorticity
+"""
 def lamb_dipole(Lx=2*np.pi, Ly=2*np.pi, Nx=32, Ny=32, U=1, R=1):
 
-
-    k = jn_zeros(1, 1)[0]/R
+    # Cartesian grid
     x = np.linspace(-Lx/2, Lx/2, Nx, endpoint=False)
     y = np.linspace(-Ly/2, Ly/2, Ny, endpoint=False)
-
     xx, yy = np.meshgrid(x, y)
 
+    # Polar coordinates
     r = np.sqrt((xx**2) + (yy**2))
     with np.errstate(divide='ignore', invalid='ignore'):
         sin_theta = yy/r
 
+    # Lamb dipole
+    k = jn_zeros(1, 1)[0]/R
     omega0 = np.where(r > R, 0, -k*2*U*sin_theta*jv(1, k*r)/(jv(0, k*R)))
+    # Fix the nan value at the origin
     omega0[int(Ny/2),int(Nx/2)] = 0
 
     return omega0.astype('complex128')

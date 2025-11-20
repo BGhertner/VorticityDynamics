@@ -1,4 +1,6 @@
-
+# Ben Ghertner 2025
+#
+# Preform time-stepping and generate a matplotlib animation of the solution.
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,6 +10,28 @@ from scipy.integrate import solve_ivp
 from poisson import poisson
 from vort_rhs import vort_rhs
 
+"""
+Preform time-stepping and generate a matplotlib animation of the solution.
+Time-stepping is done with the RK23 adaptive explicit method.
+
+inputs:
+    om0     - (2D numpy array with dimensions Ny x Nx) Initial conditions 
+              for the vorticity
+    dt      - (float) time step between frames in the animation
+    Lx      - (float) Horizontal length of the domain
+    Ly      - (float) Vertical length of the domain
+    Nx      - (int) Number of grid points in the horizontal direction
+    Ny      - (int) Number of grid points in the vertical direction
+    Uinf    - (float) Horizontal background wind speed
+    fps     - (int) Frames per second in the animation
+    frames  - (int) Number of frames in the animation 
+              (this also dictates the length of the simulation)
+    delay   - (float) Seconds paused at the end of the animation before
+              it repeates itself
+
+returns:
+    Ani     - (matplotlib animation object)
+"""
 def animation(om0, dt=0.05, Lx=2*np.pi, Ly=2*np.pi, Nx=32, Ny=32, Uinf=1,
               fps=30, frames=100, delay=0.5):
 
