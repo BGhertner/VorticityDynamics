@@ -9,6 +9,7 @@ from scipy.integrate import solve_ivp
 
 from poisson import poisson
 from vort_rhs import vort_rhs
+from fourier import interp
 
 """
 Preform time-stepping and generate a matplotlib animation of the solution.
@@ -28,35 +29,42 @@ inputs:
               (this also dictates the length of the simulation)
     delay   - (float) Seconds paused at the end of the animation before
               it repeates itself
+    Mx      - (int) Number of grid points used for plotting in the horizontal direction
+    My      - (int) Number of grid points used for plotting in the vertical direction
 
 returns:
     Ani     - (matplotlib animation object)
 """
 def animation(om0, dt=0.05, Lx=2*np.pi, Ly=2*np.pi, Nx=32, Ny=32, Uinf=1,
-              fps=30, frames=100, delay=0.5):
+              fps=30, frames=100, delay=0.5, Mx=None, My=None):
+
+    if Mx is None: Mx=Nx
+    if My is None: My=Ny
 
     #Include periodic points for plotting
-    om0_perpnt = np.empty((om0.shape[0]+1,om0.shape[1]+1))
-    om0_perpnt[:-1, :-1] = om0.real
-    om0_perpnt[-1,:-1] = om0[0,:].real
-    om0_perpnt[:-1,-1] = om0[:,0].real
-    om0_perpnt[-1,-1]  = om0[0,0].real
+    om0_plot = interp(om0, (My, Mx))
+    om0_perpnt = np.empty((om0_plot.shape[0]+1,om0_plot.shape[1]+1))
+    om0_perpnt[:-1, :-1] = om0_plot.real
+    om0_perpnt[-1,:-1] = om0_plot[0,:].real
+    om0_perpnt[:-1,-1] = om0_plot[:,0].real
+    om0_perpnt[-1,-1]  = om0_plot[0,0].real
 
-    #Grid with periodic points
-    x = np.linspace(-Lx/2, Lx/2, Nx+1, endpoint=True)
-    y = np.linspace(-Ly/2, Ly/2, Ny+1, endpoint=True)
+    #Plotting grid with periodic points
+    x = np.linspace(-Lx/2, Lx/2, Mx+1, endpoint=True)
+    y = np.linspace(-Ly/2, Ly/2, My+1, endpoint=True)
     xx, yy = np.meshgrid(x, y)
 
-    ommax = np.max(np.abs(om0))*(1.1)
+    ommax = np.max(np.abs(om0_plot))*(1.1)
 
-    psi = poisson(om0, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, Uinf=Uinf).real
-    psi_perpnt = np.empty((psi.shape[0]+1,psi.shape[1]+1))
-    psi_perpnt[:-1, :-1] = psi
-    psi_perpnt[-1,:-1] = psi[0,:] - y[0]*Uinf + y[-1]*Uinf
-    psi_perpnt[:-1,-1] = psi[:,0]
-    psi_perpnt[-1,-1] =  psi[0,0] - y[0]*Uinf + y[-1]*Uinf
+    psi = poisson(om0, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, Uinf=Uinf)
+    psi_plot = interp(psi, (My, Mx)).real
+    psi_perpnt = np.empty((psi_plot.shape[0]+1,psi_plot.shape[1]+1))
+    psi_perpnt[:-1, :-1] = psi_plot
+    psi_perpnt[-1,:-1] = psi_plot[0,:] - y[0]*Uinf + y[-1]*Uinf
+    psi_perpnt[:-1,-1] = psi_plot[:,0]
+    psi_perpnt[-1,-1] =  psi_plot[0,0] - y[0]*Uinf + y[-1]*Uinf
 
-    psimax = np.max(np.abs(psi))*(1.1)
+    psimax = np.max(np.abs(psi_plot))*(1.1)
 
     #Set up plot for animation
     fig, ax = plt.subplots()
@@ -105,20 +113,22 @@ def animation(om0, dt=0.05, Lx=2*np.pi, Ly=2*np.pi, Nx=32, Ny=32, Uinf=1,
                         atol=1e-10, rtol=1e-10)
 
             om = np.reshape(sol.y[:,-1], (Ny,Nx))
+            om_plot = interp(om, (My, Mx))
 
             #Include periodic points for plotting
-            om_perpnt = np.empty((om.shape[0]+1,om.shape[1]+1))
-            om_perpnt[:-1, :-1] = om.real
-            om_perpnt[-1,:-1] = om[0,:].real
-            om_perpnt[:-1,-1] = om[:,0].real
-            om_perpnt[-1,-1]  = om[0,0].real
+            om_perpnt = np.empty((om_plot.shape[0]+1,om_plot.shape[1]+1))
+            om_perpnt[:-1, :-1] = om_plot.real
+            om_perpnt[-1,:-1] = om_plot[0,:].real
+            om_perpnt[:-1,-1] = om_plot[:,0].real
+            om_perpnt[-1,-1]  = om_plot[0,0].real
 
-            psi = poisson(om, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, Uinf=Uinf).real
-            psi_perpnt = np.empty((psi.shape[0]+1,psi.shape[1]+1))
-            psi_perpnt[:-1, :-1] = psi
-            psi_perpnt[-1,:-1] = psi[0,:] - y[0]*Uinf + y[-1]*Uinf
-            psi_perpnt[:-1,-1] = psi[:,0]
-            psi_perpnt[-1,-1] =  psi[0,0] - y[0]*Uinf + y[-1]*Uinf
+            psi = poisson(om, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, Uinf=Uinf)
+            psi_plot = interp(psi, (My, Mx)).real
+            psi_perpnt = np.empty((psi_plot.shape[0]+1,psi_plot.shape[1]+1))
+            psi_perpnt[:-1, :-1] = psi_plot
+            psi_perpnt[-1,:-1] = psi_plot[0,:] - y[0]*Uinf + y[-1]*Uinf
+            psi_perpnt[:-1,-1] = psi_plot[:,0]
+            psi_perpnt[-1,-1] =  psi_plot[0,0] - y[0]*Uinf + y[-1]*Uinf
 
             #Redraw plot
             plots['contf'] = ax.contourf(xx, yy, om_perpnt, levels=np.linspace(-ommax, ommax, num=12), cmap='PRGn')
