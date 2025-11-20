@@ -10,6 +10,7 @@ import numpy as np
 import scipy.fft as sfft
 
 from poisson import poisson
+from fourier import interp, unpad
 
 """
 Right hand side function for time stepping of the vorticity equation.
@@ -33,11 +34,6 @@ def vort_rhs(omega, Lx, Ly, Nx, Ny, Uinf):
     l = sfft.fftfreq(Ny)*Ny*2*np.pi/Ly
     kk, ll = np.meshgrid(k, l)
 
-    #Spatial grid
-    x = np.linspace(-Lx/2, Lx/2, Nx, endpoint=False)
-    y = np.linspace(-Ly/2, Ly/2, Ny, endpoint=False)
-    _, yy = np.meshgrid(x, y)
-
     #Reshape omega to 2D array
     omega_2D = np.reshape(omega, (Ny, Nx))
     A = poisson(omega_2D, Lx, Ly, Nx, Ny, Uinf, Fourier=True)
@@ -46,18 +42,21 @@ def vort_rhs(omega, Lx, Ly, Nx, Ny, Uinf):
     u = -1j*sfft.ifft2(A*ll) + Uinf
     v =  1j*sfft.ifft2(A*kk)
 
-    #Compute (omega x u)_x
-    B = sfft.fft2(omega_2D*u)
-    assert ( (Nx%2==0) and (Ny%2==0) )
-    B[int(Ny/2),:] = 0
-    B[:,int(Nx/2)] = 0
+    ### Compute (omega x u)_x
+    #de-aliasing
+    omega_2D_pad = interp(omega_2D, (3*Ny//2, 3*Nx//2))
+    u_pad        = interp(u,        (3*Ny//2, 3*Nx//2))
+    omegau_pad = omega_2D_pad*u_pad
+    B = unpad(sfft.fft2(omegau_pad), (Ny,Nx))
+    #spectral derivative
     omegau_x = 1j*sfft.ifft2(B*kk)
 
-    #Compute (omega x v)_y
-    C = sfft.fft2(omega_2D*v)
-    assert ( (Nx%2==0) and (Ny%2==0) )
-    C[int(Ny/2),:] = 0
-    C[:,int(Nx/2)] = 0
+    ### Compute (omega x v)_y
+    #de-aliasing
+    v_pad = interp(v, (3*Ny//2, 3*Nx//2))
+    omegav_pad = omega_2D_pad*v_pad
+    C = unpad(sfft.fft2(omegav_pad), (Ny,Nx))
+    #spectral derivative
     omegav_y = 1j*sfft.ifft2(C*ll)
 
     #return "flattened" 1D right hand side
