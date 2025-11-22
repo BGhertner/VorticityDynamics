@@ -48,6 +48,6 @@ def poisson(omega, Lx, Ly, Nx, Ny, Uinf=0., Fourier=False):
     y = np.linspace(-Ly/2, Ly/2, Ny, endpoint=False)
     _, yy = np.meshgrid(x, y)
 
-    psi = sfft.ifft2(A) + Uinf*yy
+    psi = sfft.ifft2(A) - Uinf*yy
 
     return psi
