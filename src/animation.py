@@ -67,7 +67,7 @@ def animation(om0, dt=0.05, Lx=2*np.pi, Ly=2*np.pi, Nx=32, Ny=32, Uinf=1,
     ommax = np.max(np.abs(om0_plot))*(1.1)
 
     A   = poisson(om0, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, Uinf=Uinf, Fourier=True)
-    psi = poisson(om0, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, Uinf=Uinf, Fourier=False)
+    psi = poisson(om0, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, Uinf=0., Fourier=False)
     #Compute velocity components
     u = -1j*sfft.ifft2(A*ll) + Uinf
     v =  1j*sfft.ifft2(A*kk)
@@ -80,11 +80,12 @@ def animation(om0, dt=0.05, Lx=2*np.pi, Ly=2*np.pi, Nx=32, Ny=32, Uinf=1,
     psi_plot = interp(psi, (My, Mx)).real
     psi_perpnt = np.empty((psi_plot.shape[0]+1,psi_plot.shape[1]+1))
     psi_perpnt[:-1, :-1] = psi_plot
-    psi_perpnt[-1,:-1] = psi_plot[0,:] - y[0]*Uinf + y[-1]*Uinf
+    psi_perpnt[-1,:-1] = psi_plot[0,:]
     psi_perpnt[:-1,-1] = psi_plot[:,0]
-    psi_perpnt[-1,-1] =  psi_plot[0,0] - y[0]*Uinf + y[-1]*Uinf
+    psi_perpnt[-1,-1] =  psi_plot[0,0]
+    psi_perpnt += -yy*Uinf
 
-    psimax = np.max(np.abs(psi_plot))*(1.1)
+    psimax = np.max(np.abs(psi_perpnt))*(1.1)
 
     #Set up plot for animation
     fig, ax = plt.subplots()
@@ -156,7 +157,7 @@ def animation(om0, dt=0.05, Lx=2*np.pi, Ly=2*np.pi, Nx=32, Ny=32, Uinf=1,
             om_perpnt[-1,-1]  = om_plot[0,0].real
 
             A   = poisson(om, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, Uinf=Uinf, Fourier=True)
-            psi = poisson(om, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, Uinf=Uinf, Fourier=False) 
+            psi = poisson(om, Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, Uinf=0., Fourier=False) 
             #Compute velocity components
             u = (-1j*sfft.ifft2(A*ll)).real + Uinf
             v =  (1j*sfft.ifft2(A*kk)).real
@@ -164,9 +165,10 @@ def animation(om0, dt=0.05, Lx=2*np.pi, Ly=2*np.pi, Nx=32, Ny=32, Uinf=1,
             psi_plot = interp(psi, (My, Mx)).real
             psi_perpnt = np.empty((psi_plot.shape[0]+1,psi_plot.shape[1]+1))
             psi_perpnt[:-1, :-1] = psi_plot
-            psi_perpnt[-1,:-1] = psi_plot[0,:] - y[0]*Uinf + y[-1]*Uinf
+            psi_perpnt[-1,:-1] = psi_plot[0,:]
             psi_perpnt[:-1,-1] = psi_plot[:,0]
-            psi_perpnt[-1,-1] =  psi_plot[0,0] - y[0]*Uinf + y[-1]*Uinf
+            psi_perpnt[-1,-1] =  psi_plot[0,0]
+            psi_perpnt += -yy*Uinf
 
             #Redraw plot
             if plot_vort: plots['contf'] = ax.contourf(xx, yy, om_perpnt, levels=np.linspace(-ommax, ommax, num=12), cmap='PRGn')
